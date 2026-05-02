@@ -1,0 +1,62 @@
+services:
+  # -------------------------------------------------------------------------
+  # Ollama — runs the LLM locally.
+  # On first start the init container pulls the model automatically.
+  # -------------------------------------------------------------------------
+  ollama:
+    image: ollama/ollama:latest
+    container_name: budget-ai-ollama
+    restart: unless-stopped
+    ports:
+      - "11434:11434"       # Expose raw Ollama API (optional; remove for tighter security)
+    volumes:
+      - ollama_data:/root/.ollama   # Persist downloaded models across restarts
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:11434/api/tags"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
+
+  # -------------------------------------------------------------------------
+  # One-shot init container: pulls the model once Ollama is healthy.
+  # -------------------------------------------------------------------------
+  ollama-init:
+    image: ollama/ollama:latest
+    container_name: budget-ai-ollama-init
+    depends_on:
+      ollama:
+        condition: service_healthy
+    environment:
+      - OLLAMA_HOST=http://ollama:11434
+    entrypoint: ["ollama", "pull", "${DEFAULT_MODEL:-tinyllama}"]
+    restart: "no"
+
+  # -------------------------------------------------------------------------
+  # budget-ai API — FastAPI wrapper around Ollama.
+  # -------------------------------------------------------------------------
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: budget-ai-api
+    restart: unless-stopped
+    ports:
+      - "${API_PORT:-8000}:8000"
+    env_file:
+      - .env
+    environment:
+      - OLLAMA_BASE_URL=${OLLAMA_BASE_URL:-http://ollama:11434}
+      - DEFAULT_MODEL=${DEFAULT_MODEL:-tinyllama}
+    depends_on:
+      ollama:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
+volumes:
+  ollama_data:
