@@ -21,10 +21,13 @@ You can swap to any Ollama-compatible model by setting the `DEFAULT_MODEL` envir
 
 | Tool | Minimum version |
 |------|----------------|
-| Docker | 24+ |
-| Docker Compose | v2 (plugin) |
+| Podman | 4.0+ |
+| podman-compose | 1.0+ |
 
 No GPU required for `tinyllama`.
+
+> **Tip:** Run `./start.sh --install-deps` to automatically install Podman and
+> podman-compose for your OS (Ubuntu/Debian, Fedora/RHEL, or macOS via Homebrew).
 
 ---
 
@@ -35,7 +38,10 @@ No GPU required for `tinyllama`.
 git clone https://github.com/wilsprouse/budget-ai.git
 cd budget-ai
 
-# 2. Start the stack (builds the API image, starts Ollama, pulls the model)
+# 2. (Optional) Install podman and podman-compose automatically
+./start.sh --install-deps
+
+# 3. Start the stack (builds the API image, starts Ollama, pulls the model)
 ./start.sh
 
 # Or start detached:
