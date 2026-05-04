@@ -4,7 +4,7 @@ services:
   # On first start the init container pulls the model automatically.
   # -------------------------------------------------------------------------
   ollama:
-    image: ollama/ollama:latest
+    image: docker.io/ollama/ollama:latest
     container_name: budget-ai-ollama
     restart: unless-stopped
     ports:
@@ -22,7 +22,7 @@ services:
   # One-shot init container: pulls the model once Ollama is healthy.
   # -------------------------------------------------------------------------
   ollama-init:
-    image: ollama/ollama:latest
+    image: docker.io/ollama/ollama:latest
     container_name: budget-ai-ollama-init
     depends_on:
       ollama:
