@@ -4,7 +4,7 @@ services:
   # On first start the init container pulls the model automatically.
   # -------------------------------------------------------------------------
   ollama:
-    image: ollama/ollama:latest
+    image: docker.io/ollama/ollama:latest
     container_name: budget-ai-ollama
     restart: unless-stopped
     ports:
@@ -22,7 +22,7 @@ services:
   # One-shot init container: pulls the model once Ollama is healthy.
   # -------------------------------------------------------------------------
   ollama-init:
-    image: ollama/ollama:latest
+    image: docker.io/ollama/ollama:latest
     container_name: budget-ai-ollama-init
     depends_on:
       ollama:
@@ -52,11 +52,11 @@ services:
       ollama:
         condition: service_healthy
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')"]
       interval: 15s
-      timeout: 5s
+      timeout: 10s
       retries: 5
-      start_period: 10s
+      start_period: 30s
 
 volumes:
   ollama_data:
