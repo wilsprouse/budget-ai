@@ -102,6 +102,18 @@ curl -s http://localhost:8000/generate \
   -d '{"prompt": "Tell me a short story.", "stream": true}'
 ```
 
+```bash
+curl -s http://localhost:8000/chat \
+  -H "Content-Type: application/json" \
+  -d '{
+    "messages": [
+      {"role": "system", "content": "You are a helpful budgeting assistant."},
+      {"role": "user",   "content": "Give me 3 tips for reducing monthly expenses."}
+    ],
+    "stream": true
+  }'
+```
+
 ---
 
 ## Configuration
