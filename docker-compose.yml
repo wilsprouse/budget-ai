@@ -19,17 +19,18 @@ services:
       start_period: 10s
 
   # -------------------------------------------------------------------------
-  # One-shot init container: pulls the model once Ollama is healthy.
+  # One-shot init container: pulls the model once Ollama is ready.
+  # Retries until Ollama accepts connections so that `compose up -d` returns
+  # immediately instead of blocking on the healthcheck condition.
   # -------------------------------------------------------------------------
   ollama-init:
     image: docker.io/ollama/ollama:latest
     container_name: budget-ai-ollama-init
     depends_on:
-      ollama:
-        condition: service_healthy
+      - ollama
     environment:
       - OLLAMA_HOST=http://ollama:11434
-    entrypoint: ["ollama", "pull", "${DEFAULT_MODEL:-tinyllama}"]
+    entrypoint: ["sh", "-c", "n=0; until ollama pull $${DEFAULT_MODEL:-tinyllama}; do n=$$((n+1)); if [ $$n -ge 24 ]; then echo 'ERROR: Ollama did not become ready after 2 minutes, giving up.'; exit 1; fi; echo \"Ollama not ready yet, retrying in 5s... (attempt $$n/24)\"; sleep 5; done"]
     restart: "no"
 
   # -------------------------------------------------------------------------
@@ -49,8 +50,7 @@ services:
       - OLLAMA_BASE_URL=${OLLAMA_BASE_URL:-http://ollama:11434}
       - DEFAULT_MODEL=${DEFAULT_MODEL:-tinyllama}
     depends_on:
-      ollama:
-        condition: service_healthy
+      - ollama
     healthcheck:
       test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')"]
       interval: 15s
