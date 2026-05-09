@@ -102,6 +102,18 @@ curl -s http://localhost:8000/generate \
   -d '{"prompt": "Tell me a short story.", "stream": true}'
 ```
 
+```bash
+curl -s http://localhost:8000/chat \
+  -H "Content-Type: application/json" \
+  -d '{
+    "messages": [
+      {"role": "system", "content": "You are a helpful budgeting assistant."},
+      {"role": "user",   "content": "Give me 3 tips for reducing monthly expenses."}
+    ],
+    "stream": true
+  }'
+```
+
 ---
 
 ## Configuration
@@ -113,6 +125,20 @@ Copy `.env.example` to `.env` and edit as needed (the `start.sh` script does thi
 | `OLLAMA_BASE_URL` | `http://ollama:11434` | Internal Ollama URL |
 | `DEFAULT_MODEL` | `tinyllama` | Ollama model to use |
 | `API_PORT` | `8000` | Host port for the FastAPI service |
+| `WEB_CONCURRENCY` | `4` | Number of uvicorn worker processes for the FastAPI service |
+| `OLLAMA_NUM_PARALLEL` | `4` | Number of requests Ollama processes simultaneously |
+
+### Concurrent requests
+
+The stack is configured out of the box to handle multiple simultaneous users:
+
+* **`WEB_CONCURRENCY`** — controls how many uvicorn worker processes the FastAPI service runs. Each worker process runs independently and can handle multiple concurrent async requests. Increase this on machines with more CPU cores.
+* **`OLLAMA_NUM_PARALLEL`** — controls how many inference requests Ollama will run at the same time. Each additional parallel slot consumes more RAM/VRAM. Start at `4` and tune to your hardware.
+
+```bash
+# Example: higher-concurrency deployment on a beefy server
+WEB_CONCURRENCY=8 OLLAMA_NUM_PARALLEL=8 ./start.sh
+```
 
 ### Using a different model
 
