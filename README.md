@@ -66,9 +66,41 @@ Liveness probe. Also verifies Ollama is reachable.
 curl http://localhost:8000/health
 ```
 
+### `POST /v1/chat/completions` _(OpenAI-compatible — use this with budget-ai-ui)_
+
+OpenAI-compatible chat completions endpoint. Accepts the same payload shape as
+the OpenAI API and transforms Ollama responses so that **budget-ai-ui** (or any
+other OpenAI-compatible client) can target this wrapper directly.
+
+```bash
+curl -s http://localhost:8000/v1/chat/completions \
+  -H "Content-Type: application/json" \
+  -d '{
+    "model": "tinyllama",
+    "messages": [
+      {"role": "system", "content": "You are a helpful budgeting assistant."},
+      {"role": "user",   "content": "How do I create a simple monthly budget?"}
+    ]
+  }' | jq .
+```
+
+Streaming (SSE, OpenAI-compatible `data: {...}` events):
+
+```bash
+curl -s http://localhost:8000/v1/chat/completions \
+  -H "Content-Type: application/json" \
+  -d '{
+    "messages": [
+      {"role": "system", "content": "You are a helpful budgeting assistant."},
+      {"role": "user",   "content": "Give me 3 tips for reducing monthly expenses."}
+    ],
+    "stream": true
+  }'
+```
+
 ### `POST /chat`
 
-Multi-turn chat completions.
+Multi-turn chat completions (Ollama-native NDJSON response).
 
 ```bash
 curl -s http://localhost:8000/chat \
@@ -113,6 +145,30 @@ curl -s http://localhost:8000/chat \
     "stream": true
   }'
 ```
+
+---
+
+## Connecting budget-ai-ui
+
+[budget-ai-ui](https://github.com/wilsprouse/budget-ai-ui) is built for
+OpenAI-compatible endpoints. Point it at this wrapper's `/v1/chat/completions`
+route in `config.js`:
+
+```javascript
+const CONFIG = {
+  LLM_BASE_URL: 'http://localhost:8000',   // budget-ai wrapper
+  LLM_API_PATH: '/v1/chat/completions',    // OpenAI-compatible route
+  MODEL: 'tinyllama',
+  API_KEY: '',
+  SYSTEM_PROMPT: 'You are a helpful and friendly AI assistant.',
+  APP_NAME: 'Budget AI',
+};
+```
+
+The wrapper will accept the UI's `{ model, messages, stream }` payload,
+forward it to Ollama's `/api/chat`, and convert the response into the
+SSE `data: {"choices":[{"delta":{"content":"..."}}]}` format the UI parser
+expects, terminating with `data: [DONE]`.
 
 ---
 
@@ -170,15 +226,17 @@ budget-ai/
 ## Architecture
 
 ```
-  Client
-    │
-    │  HTTP (port 8000)
-    ▼
+  budget-ai-ui  (or any OpenAI-compatible client)
+      │
+      │  HTTP POST /v1/chat/completions  (OpenAI-compatible SSE)
+      ▼
 ┌─────────────┐
 │  budget-ai  │  FastAPI wrapper
-│     API     │
+│     API     │  • /v1/chat/completions  ← UI target
+│             │  • /chat
+│             │  • /generate
 └──────┬──────┘
-       │  HTTP (port 11434, internal)
+       │  HTTP POST /api/chat  (Ollama NDJSON)
        ▼
 ┌─────────────┐
 │   Ollama    │  LLM runtime
