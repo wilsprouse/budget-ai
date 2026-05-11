@@ -6,6 +6,7 @@ A lightweight FastAPI wrapper around Ollama for self-hosted LLM inference.
 import os
 import httpx
 from fastapi import FastAPI, HTTPException
+from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel, Field
 from typing import Optional
@@ -17,6 +18,14 @@ app = FastAPI(
     title="budget-ai LLM Endpoint",
     description="Self-hosted open-source LLM endpoint powered by Ollama (tinyllama).",
     version="1.0.0",
+)
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=False,
+    allow_methods=["*"],
+    allow_headers=["*"],
 )
 
 
