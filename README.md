@@ -68,12 +68,15 @@ curl http://localhost:8000/health
 
 ### `POST /chat`
 
-Multi-turn chat completions.
+Multi-turn chat completions. Uses the OpenAI-standard API format — responses follow the
+`/v1/chat/completions` schema with `id`, `object`, `created`, `model`, `choices`, and
+optional `usage` fields.
 
 ```bash
 curl -s http://localhost:8000/chat \
   -H "Content-Type: application/json" \
   -d '{
+    "model": "tinyllama",
     "messages": [
       {"role": "system", "content": "You are a helpful budgeting assistant."},
       {"role": "user",   "content": "How do I create a simple monthly budget?"}
@@ -93,8 +96,9 @@ curl -s http://localhost:8000/generate \
 
 ### Streaming
 
-Both `/chat` and `/generate` accept `"stream": true` to receive newline-delimited
-JSON tokens as they are generated:
+Both `/chat` and `/generate` accept `"stream": true` to receive tokens as they are
+generated. `/chat` streams in OpenAI Server-Sent Events (SSE) format (`text/event-stream`);
+`/generate` streams newline-delimited JSON (`application/x-ndjson`).
 
 ```bash
 curl -s http://localhost:8000/generate \
@@ -106,6 +110,7 @@ curl -s http://localhost:8000/generate \
 curl -s http://localhost:8000/chat \
   -H "Content-Type: application/json" \
   -d '{
+    "model": "tinyllama",
     "messages": [
       {"role": "system", "content": "You are a helpful budgeting assistant."},
       {"role": "user",   "content": "Give me 3 tips for reducing monthly expenses."}

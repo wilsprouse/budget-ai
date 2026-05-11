@@ -45,10 +45,25 @@ class ChatRequest(BaseModel):
     stream: bool = Field(False, description="Stream response tokens")
 
 
+class ChatCompletionChoice(BaseModel):
+    index: int = Field(..., description="Index of this choice in the list")
+    message: ChatMessage = Field(..., description="The assistant message for this choice")
+    finish_reason: Optional[str] = Field(None, description="Reason generation stopped (e.g. 'stop')")
+
+
+class ChatUsage(BaseModel):
+    prompt_tokens: int = Field(..., description="Number of tokens in the prompt")
+    completion_tokens: int = Field(..., description="Number of tokens in the completion")
+    total_tokens: int = Field(..., description="Total tokens used")
+
+
 class ChatResponse(BaseModel):
-    model: str
-    message: ChatMessage
-    done: bool
+    id: str = Field(..., description="Unique identifier for the completion")
+    object: str = Field(..., description="Object type, e.g. 'chat.completion'")
+    created: int = Field(..., description="Unix timestamp when the completion was created")
+    model: str = Field(..., description="Model used for the completion")
+    choices: list[ChatCompletionChoice] = Field(..., description="List of completion choices")
+    usage: Optional[ChatUsage] = Field(None, description="Token usage statistics")
 
 
 class GenerateRequest(BaseModel):
@@ -138,10 +153,10 @@ async def health():
 @app.post("/chat", response_model=ChatResponse, tags=["Inference"])
 async def chat(req: ChatRequest):
     """
-    Multi-turn chat completions.
+    Multi-turn chat completions (OpenAI-compatible format).
 
     Pass a list of messages with roles 'system', 'user', or 'assistant'.
-    Set `stream=true` to receive a streaming response.
+    Set `stream=true` to receive a streaming Server-Sent Events response.
     """
     payload = {
         "model": _model(req.model),
@@ -151,16 +166,12 @@ async def chat(req: ChatRequest):
 
     if req.stream:
         return StreamingResponse(
-            _stream_ollama("/api/chat", payload),
-            media_type="application/x-ndjson",
+            _stream_ollama("/v1/chat/completions", payload),
+            media_type="text/event-stream",
         )
 
-    data = await _ollama_post("/api/chat", payload)
-    return ChatResponse(
-        model=data["model"],
-        message=ChatMessage(**data["message"]),
-        done=data.get("done", True),
-    )
+    data = await _ollama_post("/v1/chat/completions", payload)
+    return ChatResponse(**data)
 
 
 @app.post("/generate", response_model=GenerateResponse, tags=["Inference"])
