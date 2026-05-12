@@ -8,7 +8,11 @@
 #   ./start.sh --install-deps # install podman and podman-compose, then start
 set -euo pipefail
 
-MODEL="${DEFAULT_MODEL:}"
+set -a
+source .env
+set +a
+
+MODEL="${DEFAULT_MODEL}"
 DETACH=""
 SELECTED_MODEL="$MODEL"
 INSTALL_DEPS=false
