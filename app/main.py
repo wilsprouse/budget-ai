@@ -106,6 +106,11 @@ async def _stream_ollama(path: str, payload: dict):
                 status_code=503,
                 detail=f"Cannot reach Ollama at {OLLAMA_BASE_URL}. Is it running?",
             ) from exc
+        except httpx.HTTPStatusError as exc:
+            raise HTTPException(
+                status_code=exc.response.status_code,
+                detail=exc.response.text,
+            ) from exc
 
 
 # ---------------------------------------------------------------------------
