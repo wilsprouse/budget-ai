@@ -12,11 +12,11 @@ from pydantic import BaseModel, Field
 from typing import Optional
 
 OLLAMA_BASE_URL = os.getenv("OLLAMA_BASE_URL", "http://ollama:11434")
-DEFAULT_MODEL = os.getenv("DEFAULT_MODEL", "tinyllama")
+DEFAULT_MODEL = os.getenv("DEFAULT_MODEL")
 
 app = FastAPI(
     title="budget-ai LLM Endpoint",
-    description="Self-hosted open-source LLM endpoint powered by Ollama (tinyllama).",
+    description="Self-hosted open-source LLM endpoint powered by Ollama.",
     version="1.0.0",
 )
 

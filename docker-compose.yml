@@ -32,7 +32,7 @@ services:
       - ollama
     environment:
       - OLLAMA_HOST=http://ollama:11434
-    entrypoint: ["sh", "-c", "n=0; until ollama pull $${DEFAULT_MODEL:-tinyllama}; do n=$$((n+1)); if [ $$n -ge 24 ]; then echo 'ERROR: Ollama did not become ready after 2 minutes, giving up.'; exit 1; fi; echo \"Ollama not ready yet, retrying in 5s... (attempt $$n/24)\"; sleep 5; done"]
+    entrypoint: ["sh", "-c", "n=0; until ollama pull $${DEFAULT_MODEL}; do n=$$((n+1)); if [ $$n -ge 24 ]; then echo 'ERROR: Ollama did not become ready after 2 minutes, giving up.'; exit 1; fi; echo \"Ollama not ready yet, retrying in 5s... (attempt $$n/24)\"; sleep 5; done"]
     restart: "no"
 
   # -------------------------------------------------------------------------
@@ -50,7 +50,7 @@ services:
       - .env
     environment:
       - OLLAMA_BASE_URL=${OLLAMA_BASE_URL:-http://ollama:11434}
-      - DEFAULT_MODEL=${DEFAULT_MODEL:-tinyllama}
+      - DEFAULT_MODEL=${DEFAULT_MODEL}
       - WEB_CONCURRENCY=${WEB_CONCURRENCY:-4}
     depends_on:
       - ollama
