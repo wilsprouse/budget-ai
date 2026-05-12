@@ -4,7 +4,7 @@ services:
   # On first start the init container pulls the model automatically.
   # -------------------------------------------------------------------------
   ollama:
-    image: docker.io/alpine/ollama:0.23.2:latest
+    image: docker.io/alpine/ollama:0.23.2
     container_name: budget-ai-ollama
     restart: unless-stopped
     ports:
